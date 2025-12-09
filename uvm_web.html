@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учебная Виртуальная Машина (Web)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            margin-bottom: 15px;
+            background: #fff;
+            color: #333;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-run {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .btn-run:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-example {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-example:hover {
+            background: #d35400;
+            transform: translateY(-2px);
+        }
+
+        .memory-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .memory-range input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            width: 80px;
+            text-align: center;
+        }
+
+        .output {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border-radius: 8px;
+            height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .status-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 0 0 15px 15px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .examples {
+            margin-top: 20px;
+        }
+
+        .example-btn {
+            background: #9b59b6;
+            color: white;
+            margin: 5px;
+            padding: 8px 15px;
+            font-size: 13px;
+        }
+
+        .example-btn:hover {
+            background: #8e44ad;
+        }
+
+        .memory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .memory-table th, .memory-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .memory-table th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .memory-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .memory-table tr:hover {
+            background-color: #e8f4fc;
+        }
+
+        .icon {
+            font-size: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover {
+            color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Учебная Виртуальная Машина</h1>
+            <div class="subtitle">Веб-версия интерпретатора УВМ с поддержкой 4 команд</div>
+        </header>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">📝 Редактор программы</div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('editor')">✏️ Редактор</button>
+                    <button class="tab" onclick="switchTab('examples')">📚 Примеры</button>
+                    <button class="tab" onclick="switchTab('help')">❓ Помощь</button>
+                </div>
+
+                <div id="editor-tab" class="tab-content active">
+                    <textarea id="codeEditor" placeholder="Введите программу на языке УВМ...
+Например:
+LOAD_CONST 5
+WRITE_MEM 100
+SGN 100
+WRITE_MEM 200"></textarea>
+
+                    <div class="controls">
+                        <button class="btn-run" onclick="runProgram()">
+                            <span class="icon">▶</span> Выполнить
+                        </button>
+                        <button class="btn-clear" onclick="clearEditor()">
+                            <span class="icon">🗑</span> Очистить
+                        </button>
+                        <button class="btn-example" onclick="loadExample('basic')">
+                            <span class="icon">📋</span> Пример
+                        </button>
+                    </div>
+
+                    <div class="memory-range">
+                        <span>Диапазон памяти:</span>
+                        <span>от</span>
+                        <input type="number" id="startAddr" value="0" min="0" max="2047">
+                        <span>до</span>
+                        <input type="number" id="endAddr" value="300" min="1" max="2047">
+                    </div>
+                </div>
+
+                <div id="examples-tab" class="tab-content">
+                    <div class="examples">
+                        <h3>Примеры программ:</h3>
+                        <button class="example-btn" onclick="loadExample('spec')">📋 Тест из спецификации</button>
+                        <button class="example-btn" onclick="loadExample('vector')">📋 Вектор SGN</button>
+                        <button class="example-btn" onclick="loadExample('copy')">📋 Копирование массива</button>
+                        <button class="example-btn" onclick="loadExample('sgn')">📋 Тест SGN</button>
+                        <button class="example-btn" onclick="loadExample('negative')">📋 Отрицательные числа</button>
+                    </div>
+                </div>
+
+                <div id="help-tab" class="tab-content">
+                    <h3>📖 Справка по языку УВМ</h3>
+                    <p>Поддерживаются 4 команды:</p>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><code>LOAD_CONST &lt;значение&gt;</code> - Загрузить константу на стек (-16384..16383)</li>
+                        <li><code>READ_MEM &lt;адрес&gt;</code> - Прочитать из памяти на стек (0-2047)</li>
+                        <li><code>WRITE_MEM &lt;адрес&gt;</code> - Записать с вершины стека в память</li>
+                        <li><code>SGN &lt;адрес&gt;</code> - Вычислить знак числа из памяти</li>
+                    </ul>
+                    <p>Пример программы:</p>
+                    <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px; margin-top: 10px;">
+LOAD_CONST 5
+WRITE_MEM 100
+LOAD_CONST -3
+WRITE_MEM 101
+SGN 100
+WRITE_MEM 200
+SGN 101
+WRITE_MEM 201</pre>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">📊 Выполнение и память</div>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchOutputTab('output')">📝 Вывод</button>
+                    <button class="tab" onclick="switchOutputTab('memory')">🧠 Память</button>
+                    <button class="tab" onclick="switchOutputTab('stack')">📚 Стек</button>
+                </div>
+
+                <div id="output-tab" class="tab-content active">
+                    <div class="output" id="outputConsole">Готов к выполнению...</div>
+                </div>
+
+                <div id="memory-tab" class="tab-content">
+                    <div class="output" id="memoryDump">
+                        <table class="memory-table" id="memoryTable">
+                            <thead>
+                                <tr>
+                                    <th>Адрес</th>
+                                    <th>Значение</th>
+                                    <th>Описание</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memoryTableBody">
+                                <!-- Здесь будет таблица памяти -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="stack-tab" class="tab-content">
+                    <div class="output" id="stackView">
+                        <!-- Здесь будет отображение стека -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div id="status">🟢 Готов к работе</div>
+            <div id="instructionCounter">Команд: 0</div>
+            <div id="stepCounter">Шагов: 0</div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== УВМ ИНТЕРПРЕТАТОР НА JAVASCRIPT ====================
+
+        class WebUVM {
+            constructor() {
+                this.dataMemory = new Array(2048).fill(0);
+                this.stack = [];
+                this.pc = 0;
+                this.halted = false;
+                this.output = "";
+                this.steps = 0;
+            }
+
+            reset() {
+                this.dataMemory.fill(0);
+                this.stack = [];
+                this.pc = 0;
+                this.halted = false;
+                this.output = "";
+                this.steps = 0;
+            }
+
+            log(message) {
+                this.output += message + "\n";
+            }
+
+            assemble(sourceCode) {
+                const lines = sourceCode.split('\n');
+                const instructions = [];
+
+                for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+                    const line = lines[lineNum].trim();
+
+                    // Пропускаем пустые строки и комментарии
+                    if (!line || line.startsWith(';')) {
+                        continue;
+                    }
+
+                    // Убираем комментарии в конце строки
+                    const codeLine = line.split(';')[0].trim();
+                    const parts = codeLine.split(/\s+/);
+
+                    if (parts.length !== 2) {
+                        throw new Error(`Строка ${lineNum + 1}: Неверное количество аргументов`);
+                    }
+
+                    const mnemonic = parts[0].toUpperCase();
+                    const operand = parseInt(parts[1]);
+
+                    if (isNaN(operand)) {
+                        throw new Error(`Строка ${lineNum + 1}: Неверный формат числа`);
+                    }
+
+                    // Проверка диапазонов
+                    if (mnemonic === 'LOAD_CONST') {
+                        if (operand < -16384 || operand > 16383) {
+                            throw new Error(`Строка ${lineNum + 1}: Константа ${operand} вне диапазона -16384..16383`);
+                        }
+                    } else {
+                        if (operand < 0 || operand > 2047) {
+                            throw new Error(`Строка ${lineNum + 1}: Адрес ${operand} вне диапазона 0-2047`);
+                        }
+                    }
+
+                    // Преобразуем мнемонику в код операции
+                    let opcode;
+                    switch(mnemonic) {
+                        case 'LOAD_CONST': opcode = 14; break;
+                        case 'READ_MEM': opcode = 11; break;
+                        case 'WRITE_MEM': opcode = 7; break;
+                        case 'SGN': opcode = 4; break;
+                        default:
+                            throw new Error(`Строка ${lineNum + 1}: Неизвестная команда ${mnemonic}`);
+                    }
+
+                    instructions.push({ opcode, operand, mnemonic });
+                }
+
+                return instructions;
+            }
+
+            execute(instructions) {
+                this.log("=".repeat(50));
+                this.log("ЗАПУСК ИНТЕРПРЕТАТОРА УВМ");
+                this.log("=".repeat(50));
+
+                for (let i = 0; i < instructions.length; i++) {
+                    this.pc = i;
+                    this.steps++;
+
+                    const instr = instructions[i];
+                    this.log(`[PC:${this.pc.toString().padStart(3, '0')}] ${instr.mnemonic} ${instr.operand.toString().padStart(4)} | Стек: [${this.stack.join(', ')}]`);
+
+                    try {
+                        this.executeInstruction(instr);
+                    } catch (error) {
+                        this.log(`\n❌ ОШИБКА ВЫПОЛНЕНИЯ: ${error.message}`);
+                        return false;
+                    }
+                }
+
+                this.log(`\n✅ Программа завершена успешно`);
+                this.log(`Выполнено шагов: ${this.steps}`);
+                return true;
+            }
+
+            executeInstruction(instr) {
+                const { opcode, operand, mnemonic } = instr;
+
+                switch(opcode) {
+                    case 14: // LOAD_CONST
+                        this.stack.push(operand);
+                        break;
+
+                    case 11: // READ_MEM
+                        if (operand < 0 || operand >= this.dataMemory.length) {
+                            throw new Error(`Адрес памяти ${operand} вне диапазона`);
+                        }
+                        this.stack.push(this.dataMemory[operand]);
+                        break;
+
+                    case 7: // WRITE_MEM
+                        if (operand < 0 || operand >= this.dataMemory.length) {
+                            throw new Error(`Адрес памяти ${operand} вне диапазона`);
+                        }
+                        if (this.stack.length === 0) {
+                            throw new Error("Стек пуст для операции WRITE_MEM");
+                        }
+                        const value = this.stack.pop();
+                        this.dataMemory[operand] = value;
+                        break;
+
+                    case 4: // SGN
+                        if (operand < 0 || operand >= this.dataMemory.length) {
+                            throw new Error(`Адрес памяти ${operand} вне диапазона`);
+                        }
+                        const memValue = this.dataMemory[operand];
+                        let result;
+
+                        if (memValue > 0) {
+                            result = 1;
+                        } else if (memValue < 0) {
+                            result = -1;
+                        } else {
+                            result = 0;
+                        }
+
+                        this.stack.push(result);
+                        break;
+                }
+            }
+
+            getMemoryDump(start, end) {
+                const dump = [];
+                for (let addr = start; addr < Math.min(end, this.dataMemory.length); addr++) {
+                    const value = this.dataMemory[addr];
+                    let description = "";
+
+                    if (value !== 0) {
+                        if (100 <= addr && addr <= 109) {
+                            description = `Элемент массива A[${addr - 100}]`;
+                        } else if (200 <= addr && addr <= 209) {
+                            description = `Элемент массива B[${addr - 200}]`;
+                        } else if (addr >= 100 && addr < 200) {
+                            description = "Исходные данные";
+                        } else if (addr >= 200 && addr < 300) {
+                            description = "Результаты";
+                        }
+                    }
+
+                    dump.push({ addr, value, description });
+                }
+                return dump;
+            }
+        }
+
+        // ==================== ИНТЕРФЕЙС ====================
+
+        const uvm = new WebUVM();
+
+        function switchTab(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Убрать активный класс у всех кнопок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Показать выбранную вкладку
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Активировать кнопку
+            event.target.classList.add('active');
+        }
+
+        function switchOutputTab(tabName) {
+            // Скрыть все вкладки вывода
+            document.querySelectorAll('#output-tab, #memory-tab, #stack-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Убрать активный класс у всех кнопок
+            document.querySelectorAll('.main-content .right .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Показать выбранную вкладку
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Активировать кнопку
+            event.target.classList.add('active');
+
+            // Если выбрана вкладка памяти, обновить таблицу
+            if (tabName === 'memory') {
+                updateMemoryTable();
+            } else if (tabName === 'stack') {
+                updateStackView();
+            }
+        }
+
+        function runProgram() {
+            const code = document.getElementById('codeEditor').value;
+            const startAddr = parseInt(document.getElementById('startAddr').value) || 0;
+            const endAddr = parseInt(document.getElementById('endAddr').value) || 300;
+
+            // Сброс интерпретатора
+            uvm.reset();
+
+            // Очистка вывода
+            document.getElementById('outputConsole').textContent = "";
+            updateStatus("🔄 Ассемблирование...");
+
+            try {
+                // Ассемблирование
+                const instructions = uvm.assemble(code);
+                updateInstructionCounter(instructions.length);
+
+                updateStatus("▶ Выполнение...");
+
+                // Выполнение
+                const success = uvm.execute(instructions);
+
+                if (success) {
+                    updateStatus("✅ Программа завершена");
+
+                    // Обновление дампа памяти
+                    updateMemoryTable();
+                    updateStackView();
+
+                    // Вывод результатов
+                    document.getElementById('outputConsole').textContent = uvm.output;
+
+                    // Показать статистику
+                    document.getElementById('stepCounter').textContent = `Шагов: ${uvm.steps}`;
+
+                    // Вывести дамп памяти в консоль
+                    const dump = uvm.getMemoryDump(startAddr, endAddr);
+                    const nonZero = dump.filter(item => item.value !== 0).length;
+
+                    uvm.log(`\n📊 Дамп памяти (${startAddr}-${endAddr-1}):`);
+                    uvm.log(`Ненулевых ячеек: ${nonZero}`);
+
+                    document.getElementById('outputConsole').textContent = uvm.output;
+                } else {
+                    updateStatus("❌ Ошибка выполнения");
+                }
+
+            } catch (error) {
+                document.getElementById('outputConsole').textContent = `❌ Ошибка ассемблирования:\n${error.message}`;
+                updateStatus("❌ Ошибка ассемблирования");
+                updateInstructionCounter(0);
+                updateStepCounter(0);
+            }
+        }
+
+        function clearEditor() {
+            document.getElementById('codeEditor').value = "";
+            document.getElementById('outputConsole').textContent = "Готов к выполнению...";
+            document.getElementById('memoryTableBody').innerHTML = "";
+            document.getElementById('stackView').innerHTML = "";
+            updateStatus("🟢 Готов к работе");
+            updateInstructionCounter(0);
+            updateStepCounter(0);
+        }
+
+        function loadExample(exampleName) {
+            let code = "";
+
+            switch(exampleName) {
+                case 'basic':
+                    code = `; Простейший пример
+LOAD_CONST 5
+WRITE_MEM 100
+SGN 100
+WRITE_MEM 200`;
+                    break;
+
+                case 'spec':
+                    code = `; Тест из спецификации УВМ
+LOAD_CONST 831
+READ_MEM 97
+WRITE_MEM 291
+SGN 158`;
+                    break;
+
+                case 'vector':
+                    code = `; Вектор SGN (10 элементов)
+; Исходный вектор
+LOAD_CONST 5
+WRITE_MEM 100
+LOAD_CONST -2
+WRITE_MEM 101
+LOAD_CONST 0
+WRITE_MEM 102
+LOAD_CONST 100
+WRITE_MEM 103
+LOAD_CONST -50
+WRITE_MEM 104
+LOAD_CONST 1
+WRITE_MEM 105
+LOAD_CONST -1
+WRITE_MEM 106
+LOAD_CONST 999
+WRITE_MEM 107
+LOAD_CONST -999
+WRITE_MEM 108
+LOAD_CONST 0
+WRITE_MEM 109
+
+; Результаты SGN
+SGN 100
+WRITE_MEM 200
+SGN 101
+WRITE_MEM 201
+SGN 102
+WRITE_MEM 202
+SGN 103
+WRITE_MEM 203
+SGN 104
+WRITE_MEM 204
+SGN 105
+WRITE_MEM 205
+SGN 106
+WRITE_MEM 206
+SGN 107
+WRITE_MEM 207
+SGN 108
+WRITE_MEM 208
+SGN 109
+WRITE_MEM 209`;
+                    break;
+
+                case 'copy':
+                    code = `; Копирование массива
+LOAD_CONST 10
+WRITE_MEM 110
+LOAD_CONST 20
+WRITE_MEM 111
+LOAD_CONST 30
+WRITE_MEM 112
+
+READ_MEM 110
+WRITE_MEM 210
+READ_MEM 111
+WRITE_MEM 211
+READ_MEM 112
+WRITE_MEM 212`;
+                    break;
+
+                case 'sgn':
+                    code = `; Тест функции SGN
+LOAD_CONST 5
+WRITE_MEM 120
+LOAD_CONST 0
+WRITE_MEM 121
+LOAD_CONST -3
+WRITE_MEM 122
+
+SGN 120
+WRITE_MEM 220
+SGN 121
+WRITE_MEM 221
+SGN 122
+WRITE_MEM 222`;
+                    break;
+
+                case 'negative':
+                    code = `; Тест отрицательных чисел
+LOAD_CONST -16384
+WRITE_MEM 130
+LOAD_CONST 16383
+WRITE_MEM 131
+LOAD_CONST -100
+WRITE_MEM 132
+
+SGN 130
+WRITE_MEM 230
+SGN 131
+WRITE_MEM 231
+SGN 132
+WRITE_MEM 232`;
+                    break;
+            }
+
+            document.getElementById('codeEditor').value = code;
+            switchTab('editor');
+        }
+
+        function updateMemoryTable() {
+            const startAddr = parseInt(document.getElementById('startAddr').value) || 0;
+            const endAddr = parseInt(document.getElementById('endAddr').value) || 300;
+            const dump = uvm.getMemoryDump(startAddr, endAddr);
+
+            const tableBody = document.getElementById('memoryTableBody');
+            tableBody.innerHTML = "";
+
+            dump.forEach(item => {
+                const row = document.createElement('tr');
+
+                const addrCell = document.createElement('td');
+                addrCell.textContent = item.addr;
+
+                const valueCell = document.createElement('td');
+                valueCell.textContent = item.value;
+                if (item.value !== 0) {
+                    valueCell.style.fontWeight = 'bold';
+                    valueCell.style.color = '#e74c3c';
+                }
+
+                const descCell = document.createElement('td');
+                descCell.textContent = item.description;
+
+                row.appendChild(addrCell);
+                row.appendChild(valueCell);
+                row.appendChild(descCell);
+                tableBody.appendChild(row);
+            });
+        }
+
+        function updateStackView() {
+            const stackView = document.getElementById('stackView');
+            stackView.innerHTML = "";
+
+            if (uvm.stack.length === 0) {
+                stackView.textContent = "Стек пуст";
+                return;
+            }
+
+            const stackDiv = document.createElement('div');
+            stackDiv.style.display = 'flex';
+            stackDiv.style.flexDirection = 'column-reverse';
+            stackDiv.style.gap = '5px';
+            stackDiv.style.alignItems = 'center';
+
+            // Отображаем стек снизу вверх
+            for (let i = 0; i < uvm.stack.length; i++) {
+                const itemDiv = document.createElement('div');
+                itemDiv.style.background = i === uvm.stack.length - 1 ? '#2ecc71' : '#3498db';
+                itemDiv.style.color = 'white';
+                itemDiv.style.padding = '10px 20px';
+                itemDiv.style.borderRadius = '5px';
+                itemDiv.style.minWidth = '60px';
+                itemDiv.style.textAlign = 'center';
+                itemDiv.style.fontWeight = 'bold';
+                itemDiv.textContent = uvm.stack[i];
+
+                if (i === uvm.stack.length - 1) {
+                    itemDiv.innerHTML += '<br><small>(вершина)</small>';
+                }
+
+                stackDiv.appendChild(itemDiv);
+            }
+
+            stackView.appendChild(stackDiv);
+            stackView.innerHTML += `<div style="margin-top: 10px; color: #666;">Всего элементов: ${uvm.stack.length}</div>`;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        function updateInstructionCounter(count) {
+            document.getElementById('instructionCounter').textContent = `Команд: ${count}`;
+        }
+
+        function updateStepCounter(steps) {
+            document.getElementById('stepCounter').textContent = `Шагов: ${steps}`;
+        }
+
+        // Загрузка простого примера при открытии
+        window.onload = function() {
+            loadExample('basic');
+        };
+    </script>
+</body>
+
+</html>
