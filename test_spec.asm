@@ -1,0 +1,5 @@
+; Тест из спецификации УВМ
+LOAD_CONST 831
+READ_MEM 97
+WRITE_MEM 291
+SGN 158
