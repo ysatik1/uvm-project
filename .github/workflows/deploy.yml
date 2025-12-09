@@ -3,9 +3,12 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -13,14 +16,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
-      - name: Create index.html
+        
+      - name: Create redirect index
         run: |
-          # Копируем web_uvm.html в index.html
-          cp web_uvm.html index.html
+          echo '<!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0; url=uvm_web.html">
+            <title>УВМ - Перенаправление</title>
+          </head>
+          <body>
+            <p>Перенаправление на веб-версию УВМ...</p>
+          </body>
+          </html>' > index.html
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: '.'
           
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+        uses: actions/deploy-pages@v1
