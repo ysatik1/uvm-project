@@ -1,0 +1,11 @@
+{
+  "name": "uvm-web",
+  "version": "1.0.0",
+  "description": "Веб-версия Учебной Виртуальной Машины",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'Откройте index.html в браузере'"
+  },
+  "author": "UVM Project",
+  "license": "MIT"
+}
